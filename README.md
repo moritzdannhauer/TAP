@@ -1,0 +1,2 @@
+# fMRI-based_TMS_Targeting_Pipeline
+Custom MATLAB code to determine an optimal scalp placement of a TMS coil on the computational model of the subject's head. (1) Optimal coil placement is chosen based on maximizing the TMS-induced electric field in a brain region of interest which is derived from individual fMRI peak activity and computed prospectively for neuronavigation-supported TMS experiments. (2) The code's functionality allows also for accuracy assessment of the coil placement recorded during and analyzed after a TMS session.
