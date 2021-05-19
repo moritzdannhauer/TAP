@@ -1,0 +1,8 @@
+The copyrights of this software are owned by Duke University. As such, two licenses to this software are offered:
+
+	1. An open-source license under the MIT license.
+	2. A custom license with Duke University, for use without the MIT restrictions.
+ 
+As a recipient of this software, you may choose which license to receive the code under. Outside contributions to the Duke owned code base cannot be accepted unless the contributor transfers the copyright to those changes over to Duke University.
+
+To enter a license agreement without the MIT restrictions, please contact the Digital Innovations department at Duke Office of Licensing and Ventures (https://olv.duke.edu/software/) at olvquestions@duke.edu with reference to "OLV File No. 7520" in your email. 
