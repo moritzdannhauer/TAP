@@ -1,0 +1,8 @@
+# Version: 12
+# Coordinate system: Brainsight
+# Created by: Brainsight 2.4.6
+# Units: millimetres, degrees, milliseconds, and microvolts
+# Encoding: UTF-8
+# Notes: Each column is delimited by a tab. Each value within a column is delimited by a semicolon.
+# Sample	Name	Session	Name	Index	Assoc. Target	Loc. X	Loc. Y	Loc. Z	m0n0	m0n1	m0n2	m1n0	m1n1	m1n2	m2n0	m2n1	m2n2	Dist. to Target	Target Error	Angular Error	Twist Error	Date	Time	Creation Cause	Crosshairs Driver	Offset	Comment
+Subject	1	Session	2	1	Subj4PMC3HT5mm 	180.9276	152.138	195.5982	-0.6238	0.667	0.4074	-0.4964	-0.7408	0.4526	-0.6037	-0.08016	0.7932	0.0000	0.0000	0.0000	0.0000	2020-11-08	19:01:03.097	Button	Mouse	0.0000	(null)
