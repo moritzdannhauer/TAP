@@ -1,11 +1,16 @@
-function make_brainsight_files(subject, target, A, outputfolder, ht, REVERSE_COIL_CURRENT)
+function make_brainsight_files(subjects_folder, subject, target, A, outputfolder, ht, REVERSE_COIL_CURRENT, sep, coord_sys)
   point=A(1:3,4);
-  if (~exist([subject '/' outputfolder ]))
-       mkdir([subject '/' outputfolder ]);
+  if (~exist([subjects_folder sep subject sep outputfolder ]))
+       mkdir([subjects_folder sep subject sep' outputfolder ]);
   end
-  f=fopen([subject '/' outputfolder '/' 's' subject '_' target '_hair' sprintf('%.1f',ht) 'mm.txt' ],'w');
+  f=fopen([subjects_folder sep subject sep outputfolder sep subject '_' target '_hair' sprintf('%.1f',ht) 'mm.txt' ],'w');
   fprintf(f,'# Version: 12\n');
-  fprintf(f,'# Coordinate system: Brainsight\n');
+  if (coord_sys==1)
+    fprintf(f,'# Coordinate system: Brainsight\n');
+  end
+  if (coord_sys==2)
+    fprintf(f,'# Coordinate system: NIfTI:Aligned\n');  
+  end
   fprintf(f,'# Created by: Brainsight 2.4.6\n');
   fprintf(f,'# Units: millimetres, degrees, milliseconds, and microvolts\n');
   fprintf(f,'# Encoding: UTF-8\n');
@@ -14,11 +19,11 @@ function make_brainsight_files(subject, target, A, outputfolder, ht, REVERSE_COI
   datum=char(datetime('now','Format','yyyy-MM-dd HH:mm:ss'));
   datum_1=datum(1:strfind(datum,' ')-1);
   datum_2=datum(strfind(datum,' ')+1:end);
-  %if (REVERSE_COIL_CURRENT==0)
+  if (REVERSE_COIL_CURRENT==0)
     fprintf(f,['Subject' '\t1\tSession\t2\t1\t' subject target 'HT' num2str(ht) 'mm' ' \t' num2str(point(1)) '\t'  num2str(point(2)) '\t' num2str(point(3)) '\t' num2str(A(1,1),4) '\t' num2str(A(2,1),4) '\t' num2str(A(3,1),4) '\t'  num2str(A(1,2),4) '\t' num2str(A(2,2),4) '\t' num2str(A(3,2),4) '\t' num2str(A(1,3),4) '\t' num2str(A(2,3),4) '\t' num2str(A(3,3),4) '\t' '0.0000\t0.0000\t0.0000\t0.0000\t' datum_1 '\t' datum_2 '.097\tButton\tMouse\t0.0000\t(null)\n']);
-  %else
-  %  fprintf(f,['Subject' '\t1\tSession\t2\t1\t' subject  target 'HT' num2str(ht) 'mm' '_REVERSECOILCURRENT' ' \t' num2str(point(1)) '\t'  num2str(point(2)) '\t' num2str(point(3)) '\t' num2str(A(1,1),4) '\t' num2str(A(2,1),4) '\t' num2str(A(3,1),4) '\t'  num2str(A(1,2),4) '\t' num2str(A(2,2),4) '\t' num2str(A(3,2),4) '\t' num2str(A(1,3),4) '\t' num2str(A(2,3),4) '\t' num2str(A(3,3),4) '\t' '0.0000\t0.0000\t0.0000\t0.0000\t' datum_1 '\t' datum_2 '.097\tButton\tMouse\t0.0000\t(null)\n']);  
-  %end
+  else
+    fprintf(f,['Subject' '\t1\tSession\t2\t1\t' subject  target 'HT' num2str(ht) 'mm' '_REVERSECOILCURRENT' ' \t' num2str(point(1)) '\t'  num2str(point(2)) '\t' num2str(point(3)) '\t' num2str(A(1,1),4) '\t' num2str(A(2,1),4) '\t' num2str(A(3,1),4) '\t'  num2str(A(1,2),4) '\t' num2str(A(2,2),4) '\t' num2str(A(3,2),4) '\t' num2str(A(1,3),4) '\t' num2str(A(2,3),4) '\t' num2str(A(3,3),4) '\t' '0.0000\t0.0000\t0.0000\t0.0000\t' datum_1 '\t' datum_2 '.097\tButton\tMouse\t0.0000\t(null)\n']);  
+  end
   fclose(f);
  
-disp(['wrote file: ' outputfolder '/s' subject '_' target '_hair' sprintf('%.1f',ht) 'mm.txt' ]);
+disp(['wrote file: ' outputfolder sep subject '_' target '_hair' sprintf('%.1f',ht) 'mm.txt' ]);
