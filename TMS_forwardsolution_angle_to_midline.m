@@ -1,7 +1,7 @@
 clear all;
 
 TMS_COIL_ANGLE_TO_MIDLINE = 45; %degree
-HairThinkness = 10; %mm
+HairThinkness = 2; %mm
 
 if (ispc)
     sep='\';
@@ -9,10 +9,10 @@ elseif (ismac || isunix)
     sep='/';
 end
 
-subj='Ernie_headreco';
-subjects_folder='subjects';
+subj='ernie_headreco_no-conform';
+subjects_folder='Subjects';
 target_name='DLPFC';
-mask='DLPFC_mask_TMS_target.nii.gz';%'M1_mask_TMS_target.nii.gz';%'fiducial_AIL.nii.gz';%'fiducial_AIL.nii.gz';%'gm_fromMesh.nii.gz';%'fiducial_AIL.nii.gz';%M1_mask_TMS_target.nii.gz';%'fiducials_AIL.nii.gz';%'fiducials.nii.gz';%'gm_fromMesh.nii.gz';%'fiducials_AIL.nii.gz';%'fiducials.nii.gz';%'ernie_masks_contr.nii.gz';%'fiducial_points.nii.gz';%'gm_fromMesh.nii.gz';%'M1_mask_opt.nii.gz';%'gm_fromMesh.nii.gz';%'ernie_masks_contr.nii.gz';%'gm_fromMesh.nii.gz';%'ernie_masks_contr.nii.gz';%'fiducial_points.nii.gz';%'M1_mask_opt.nii.gz';%exp/24372_PMC_writingactive_firstlevel_zstat1_T1w.nii.gz';%'gm_only.nii.gz';%'exp/PMC_RUA.nii.gz';%'exp/24372_PMC_LDB.nii.gz'; %'24372_PMC.nii.gz'; %'gm_only.nii.gz';
+mask='DLPFC_mask_TMS_target.nii.gz';
 outputfolder='DLPFC_TMSsim';
 scirunfolder='DLPFC_scirun';
 SimNIBS_MRI=[subj '_T1fs_conform.nii.gz'];
@@ -86,5 +86,8 @@ S.poslist{1}.pos(1).matsimnibs=T;
 run_simnibs(S);
 
 A=T;
+
+A(:,3)=-A(:,3); %Brainsight normal is inverted compared to SimNIBS, so flipping it here
+
 make_brainsight_files(subjects_folder, subj, target_name, A, outputfolder, HairThinkness, Flip_current_direction, sep, 2);
  
