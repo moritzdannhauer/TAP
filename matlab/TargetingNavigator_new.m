@@ -22,12 +22,10 @@ function varargout = TargetingNavigator(varargin)
 
 % Edit the above text to modify the response to help TargetingNavigator
 
-% Last Modified by GUIDE v2.5 29-Apr-2022 08:56:16
+% Last Modified by GUIDE v2.5 29-Apr-2022 03:23:33
 
 % Begin initialization code - DO NOT EDIT
-global root_folder
 global tmp;
-global tms_opt;
 global TN_brain;
 global TN_scalp;
 global TN_brain_tetcenter;
@@ -64,9 +62,7 @@ global x100_b80_a;
 global x100_b80_b;
 global x100_b91_a;
 global x100_b91_b;
-global TN_abort_targeting_navigator;
 
-TN_abort_targeting_navigator=0;
 tmp=NaN;
 
 r30_b65_a = 1.5743;
@@ -138,7 +134,7 @@ while nr_inputs>0
        
        if ( strcmp(lower(varargin{i}),'roi_normal') && i<nr_inputs)
           if (isvector(varargin{i+1}))
-           TN_roi_normal=varargin{i+1}; %Scale it to be visable, outward-pointing
+           TN_roi_normal=-1*varargin{i+1}; %Scale it to be visable, outward-pointing
            TN_roi_normal=TN_roi_normal/norm(TN_roi_normal);
            TN_roi_normal_saved=TN_roi_normal;
            i=i+1;
@@ -151,15 +147,29 @@ while nr_inputs>0
            i=i+1;
           end
        end 
-
+       
     end
     i=i+1;
 end
 
 %brain cut with ROI
+r = TN_brain_tetcenter.field';
+r(:,1)=r(:,1)-TN_roi_center(1);
+r(:,2)=r(:,2)-TN_roi_center(2);
+r(:,3)=r(:,3)-TN_roi_center(3);
+r=sqrt(sum(r.^2,2));
+ind=find(r<=TN_brain_around_roi_center);
+TN_brain_roi_interface=TN_brain;
+TN_brain_roi_interface.face=TN_brain_roi_interface.face(:,ind);
+TN_brain_roi_interface.field=zeros(1,length(ind));
+TN_brain_roi_interface = clean_tri_mesh(TN_brain_roi_interface.node',TN_brain_roi_interface.face',TN_brain_roi_interface.field');
 
-create_roi();
- 
+ind=find(r<=TN_roi_size*2);
+TN_roi.node=TN_brain_tetcenter.node';
+TN_roi.face=TN_brain_tetcenter.face(:,ind);
+TN_roi.field=zeros(1,length(ind));
+TN_roi = clean_tri_mesh(TN_roi.node',TN_roi.face',TN_roi.field');
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -175,38 +185,6 @@ if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
     gui_mainfcn(gui_State, varargin{:});
-end
-
-
-
-function create_roi()
-global TN_roi_center;
-global TN_roi_size;
-global TN_roi;
-global TN_brain_roi_interface;
-global TN_brain_around_roi_center;
-global TN_brain;
-global TN_brain_tetcenter;
-
-r = TN_brain_tetcenter.field';
-r(:,1)=r(:,1)-TN_roi_center(1);
-r(:,2)=r(:,2)-TN_roi_center(2);
-r(:,3)=r(:,3)-TN_roi_center(3);
-r=sqrt(sum(r.^2,2));
-ind=find(r<=TN_brain_around_roi_center);
-if (~isempty(ind))
-TN_brain_roi_interface=TN_brain;
-TN_brain_roi_interface.face=TN_brain_roi_interface.face(:,ind);
-TN_brain_roi_interface.field=zeros(1,length(ind));
-TN_brain_roi_interface = clean_tri_mesh(TN_brain_roi_interface.node',TN_brain_roi_interface.face',TN_brain_roi_interface.field');
-end
-
-ind=find(r<=TN_roi_size);
-if (~isempty(ind))
-TN_roi.node=TN_brain_tetcenter.node';
-TN_roi.face=TN_brain_tetcenter.face(:,ind);
-TN_roi.field=zeros(1,length(ind));
-TN_roi = clean_tri_mesh(TN_roi.node',TN_roi.face',TN_roi.field');
 end
 
 function TargetingNavigator_PlotSurf(varargin)
@@ -359,7 +337,6 @@ function populate_tms_intensity(selection)
  end
 
 function populate_tms_intensity_didt_changed(selection)
- global tms_opt;
  global handles;
  global TN_chosen_stimulator_coil_setup;
  global r30_b65_a;
@@ -401,7 +378,7 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO));
-           tms_opt.didt=didt*1000000;
+ 
       case 2
            a=r30_b70_a;
            b=r30_b70_b;
@@ -417,7 +394,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO)); 
-           tms_opt.didt=didt*1000000;
       case 3
            a=r30_b80_a;
            b=r30_b80_b;
@@ -433,7 +409,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO));
-           tms_opt.didt=didt*1000000;
       case 4
            a=r30_b91_a;
            b=r30_b91_b;
@@ -449,7 +424,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO));
-           tms_opt.didt=didt*1000000;
       case 5
            a=x100_b65_a;
            b=x100_b65_b;
@@ -465,7 +439,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO));
-           tms_opt.didt=didt*1000000;
       case 6
            a=x100_b70_a;
            b=x100_b70_b;
@@ -481,7 +454,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO)); 
-           tms_opt.didt=didt*1000000;
       case 7
            a=x100_b80_a;
            b=x100_b80_b;
@@ -497,7 +469,6 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO)); 
-           tms_opt.didt=didt*1000000;
       case 8
            a=x100_b91_a;
            b=x100_b91_b;
@@ -513,9 +484,12 @@ function populate_tms_intensity_didt_changed(selection)
            end
            set(handles.edit15,'String',num2str(didt));
            set(handles.edit16,'String',num2str(MSO)); 
-           tms_opt.didt=didt*1000000;
  end 
  tmp=NaN;
+ 
+function TargetingNavigator_DeleteFcn(hObject, eventdata, handles, varargin)
+  
+disp('done');
 
 % --- Executes just before TargetingNavigator is made visible.
 function TargetingNavigator_OpeningFcn(hObject, eventdata, handles, varargin)
@@ -537,7 +511,6 @@ global TN_alpha_first;
 global TN_alpha_second;
 global TN_selected_stimulator;
 global TN_selected_coil;
-global TN_roi_size;
 
 global x100_b65_a;
 global x100_b65_b;
@@ -547,25 +520,23 @@ global popup_menus10;
 
 
 TN_surf_first='Brain Surface';
-TN_surf_second='ROI';
+TN_surf_second='None';
 TN_alpha_first=0.5;
 TN_alpha_second=1.0;
 
 %Setup menus
-set(handles.edit5,'String',num2str(TN_roi_size));
-
 popup_menus={'Brain Surface','Brain/ROI Interface','Scalp Surface','ROI','None'};
 handles.popupmenu2.String = popup_menus;
 handles.popupmenu4.String = popup_menus;
 handles.edit6.String = 0.5;
 handles.edit7.String = 1.0;
-handles.popupmenu4.Value=length(popup_menus)-1;
+handles.popupmenu4.Value=length(popup_menus);
 
 %setup more menus
 popup_menus2={'ROI Location','Coil Center','RPA','LPA','Nasion'};
 handles.popupmenu1.String = popup_menus2;
 
-popup_menus3={'ROI Size (Radius in mm)','Tangential E-Field Component (deg)','Hair thickness (in mm)','Coil Pitch (deg)','Coil Roll (deg)','Roil Yaw (deg)'};
+popup_menus3={'ROI Size (Radius in mm)','Tangential E-Field Component','Hair thickness (in mm)','Coil Pitch','Coil Roll','Roil Yaw'};
 handles.popupmenu3.String = popup_menus3;
 
 popup_menus4={'Median','75% max','90% max','99% max','E20','E50','E100'};
@@ -584,21 +555,13 @@ TN_selected_coil = popup_menus10(1);
 
 global MSO;
 global didt;
-global TN_roi_center;
-global tms_opt;
-
 MSO=50;
 didt=MSO*x100_b65_a+x100_b65_b;
-tms_opt.didt=didt*1000000;
 handles.edit16.String = num2str(MSO);
 handles.edit15.String = num2str(didt);
 
 handles.edit17.String = num2str(x100_b65_a);
 handles.edit18.String = num2str(x100_b65_b);
-
-set(handles.edit1,'String',num2str(TN_roi_center(1)));
-set(handles.edit2,'String',num2str(TN_roi_center(2)));
-set(handles.edit4,'String',num2str(TN_roi_center(3)));
 
 function [Output1, Output2] = TargetingNavigator_getSurfAndColor(TN_surf)
 
@@ -663,7 +626,6 @@ global TN_surf_first;
 global TN_surf_second;
 global TN_alpha_first;
 global TN_alpha_second;
-global TN_abort_targeting_navigator;
 
 plotted=false;
 if (exist('TN_surf_first','var'))
@@ -687,9 +649,10 @@ else
       plotted=true;
    end
 end
-cla reset;
-TargetingNavigator_PlotFirst();
-TargetingNavigator_PlotSecond();
+
+if (~plotted)
+    disp('not plotted');
+end
 
 % --- Executes on selection change in popupmenu1.
 function popupmenu1_Callback(hObject, eventdata, handles)
@@ -699,8 +662,6 @@ function popupmenu1_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu1
-global TN_roi_center;
-TN_roi_center=get(hObject,'Value');
 
 
 % --- Executes during object creation, after setting all properties.
@@ -724,10 +685,7 @@ function edit1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit1 as text
 %        str2double(get(hObject,'String')) returns contents of edit1 as a double
-global TN_roi_center;
-TN_roi_center=str2double(get(hObject,'String'));
-TargetingNavigator_PlotFirst();
-TargetingNavigator_PlotSecond();
+
 
 % --- Executes during object creation, after setting all properties.
 function edit1_CreateFcn(hObject, eventdata, handles)
@@ -750,10 +708,7 @@ function edit2_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit2 as text
 %        str2double(get(hObject,'String')) returns contents of edit2 as a double
-global TN_roi_center;
-TN_roi_center(2)=str2double(get(hObject,'String'));
-TargetingNavigator_PlotFirst();
-TargetingNavigator_PlotSecond();
+
 
 % --- Executes during object creation, after setting all properties.
 function edit2_CreateFcn(hObject, eventdata, handles)
@@ -776,12 +731,7 @@ function edit4_Callback(~, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit4 as text
 %        str2double(get(hObject,'String')) returns contents of edit4 as a double
-global TN_roi_center;
-if (exist(hObject,'var'))
- TN_roi_center(3)=str2double(get(hObject,'String'));
- TargetingNavigator_PlotFirst();
- TargetingNavigator_PlotSecond();
-end
+
 
 % --- Executes during object creation, after setting all properties.
 function edit4_CreateFcn(hObject, eventdata, handles)
@@ -944,13 +894,10 @@ if(strcmp(TN_surf_second,'ROI') || strcmp(TN_surf_first,'ROI'))
           tmp=size(TN_roi_normal);   
            if (min(tmp)==1 && max(tmp)==3)
              hold on;
-             xdiff=TN_roi_normal_len*TN_roi_normal(1);
-             ydiff=TN_roi_normal_len*TN_roi_normal(2);
-             zdiff=TN_roi_normal_len*TN_roi_normal(3);
-             tmp=quiver3(TN_roi_center(1)-xdiff,TN_roi_center(2)-ydiff,TN_roi_center(3)-zdiff,xdiff+0.5,ydiff+0.5,zdiff+0.5);
+             tmp=quiver3(TN_roi_center(1)+TN_roi_normal_len*TN_roi_normal(1),TN_roi_center(2)+TN_roi_normal_len*TN_roi_normal(2),TN_roi_center(3)+TN_roi_normal_len*TN_roi_normal(3),-TN_roi_normal(1)*TN_roi_normal_len,-TN_roi_normal(2)*TN_roi_normal_len,-TN_roi_normal(3)*TN_roi_normal_len);
              tmp.Color = 'cyan';
              tmp.LineWidth=5;
-             tmp.MaxHeadSize=5;
+             tmp.MaxHeadSize=3;
            end
          end
      end
@@ -1021,8 +968,6 @@ global TN_rotate_that;
 global TN_scalp_normal;
 global TN_roi_normal;
 global TN_roi_normal_saved;
-global TN_roi_size;
-global tms_opt;
 
 keep_old_value=false;
 tmp=str2double(handles.edit5.String);
@@ -1035,21 +980,11 @@ if (isnumeric(tmp))
     end
 end
 
-if (~keep_old_value && strcmp(char(handles.popupmenu3.String(handles.popupmenu3.Value)),'Tangential E-Field Component (deg)'))
+if (~keep_old_value && strcmp(char(handles.popupmenu3.String(handles.popupmenu3.Value)),'Tangential E-Field Component'))
  TN_roi_normal = rotVecAroundArbAxis(TN_roi_normal_saved,TN_scalp_normal,tmp);
- tms_opt.field=TN_roi_normal';
  cla reset;
  TargetingNavigator_PlotFirst();
  TargetingNavigator_PlotSecond();
-end
-
-if (~keep_old_value && strcmp(char(handles.popupmenu3.String(handles.popupmenu3.Value)),'ROI Size (Radius in mm)'))  
-  create_roi();
-  TN_roi_size=tmp';
-  tms_opt.size=TN_roi_size;
-  cla reset;
-  TargetingNavigator_PlotFirst();
-  TargetingNavigator_PlotSecond();
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -1278,13 +1213,10 @@ if(strcmp(TN_surf_second,'ROI') || strcmp(TN_surf_first,'ROI'))
           tmp=size(TN_roi_normal);   
            if (min(tmp)==1 && max(tmp)==3)
              hold on;
-             xdiff=TN_roi_normal_len*TN_roi_normal(1);
-             ydiff=TN_roi_normal_len*TN_roi_normal(2);
-             zdiff=TN_roi_normal_len*TN_roi_normal(3);
-             tmp=quiver3(TN_roi_center(1)-xdiff,TN_roi_center(2)-ydiff,TN_roi_center(3)-zdiff,xdiff+0.5,ydiff+0.5,zdiff+0.5);
+             tmp=quiver3(TN_roi_center(1)+TN_roi_normal_len*TN_roi_normal(1),TN_roi_center(2)+TN_roi_normal_len*TN_roi_normal(2),TN_roi_center(3)+TN_roi_normal_len*TN_roi_normal(3),-TN_roi_normal(1)*TN_roi_normal_len,-TN_roi_normal(2)*TN_roi_normal_len,-TN_roi_normal(3)*TN_roi_normal_len);
              tmp.Color = 'cyan';
              tmp.LineWidth=5;
-             tmp.MaxHeadSize=5;
+             tmp.MaxHeadSize=3;
            end
          end
      end
@@ -1301,8 +1233,9 @@ function popupmenu4_Callback(hObject, eventdata, handles)
 
 global TN_surf_second;
 
-TN_surf_second=get(hObject,'String');
-cla reset;
+contents = cellstr(get(hObject,'String'));
+TN_surf_second=contents{get(hObject,'Value')};
+
 TargetingNavigator_PlotSecond();
 
 
@@ -1328,28 +1261,27 @@ function edit7_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit7 as text
 %        str2double(get(hObject,'String')) returns contents of edit7 as a double
 
-% global TN_alpha_second;
-% 
-% keep_old_value=false;
-% tmp=str2double(handles.edit7.String);
-% if (isnumeric(tmp))
-%     if (tmp>=0.02 && tmp<=1.0)
-%         TN_alpha_second=tmp;
-%     else
-%         keep_old_value=true;
-%     end
-% else
-%     keep_old_value=true;
-% end
-% 
-% if (keep_old_value)
-%    handles.edit7.String=num2str(TN_alpha_second);
-% end
-% 
-% if (~keep_old_value)
-%     cla reset;
-%   TargetingNavigator_PlotSecond();
-% end
+global TN_alpha_second;
+
+keep_old_value=false;
+tmp=str2double(handles.edit7.String);
+if (isnumeric(tmp))
+    if (tmp>=0.02 && tmp<=1.0)
+        TN_alpha_second=tmp;
+    else
+        keep_old_value=true;
+    end
+else
+    keep_old_value=true;
+end
+
+if (keep_old_value)
+   handles.edit7.String=num2str(TN_alpha_second);
+end
+
+if (~keep_old_value)
+  TargetingNavigator_PlotSecond();
+end
 
 % --- Executes during object creation, after setting all properties.
 function edit7_CreateFcn(hObject, eventdata, handles)
@@ -1481,27 +1413,22 @@ global didt;
 global MSO;
 global TN_chosen_stimulator_coil_setup;
 global tmp;
-global tms_opt;
-
-if (exist('hObject','var'))
- val = str2double(get(hObject,'String'));
- if ( val == 0)
+val = str2double(get(hObject,'String'));
+if ( val == 0)
   MSO=0; 
   didt=0;
   set(handles.edit15,'String',num2str(didt));
   set(handles.edit16,'String',num2str(MSO)); 
-  tms_opt.didt=didt*1000000;
   return ;
- end
- if (val<0)
+end
+if (val<0)
    set(handles.edit15,'String',num2str(didt));
    set(handles.edit16,'String',num2str(MSO)); 
-   tms_opt.didt=didt*1000000;
- else
+else
    tmp=val;
    populate_tms_intensity_didt_changed(TN_chosen_stimulator_coil_setup);
- end 
 end 
+ 
 
 % --- Executes during object creation, after setting all properties.
 function edit15_CreateFcn(hObject, eventdata, handles)
@@ -1527,8 +1454,6 @@ function edit16_Callback(hObject, eventdata, handles)
 global MSO;
 global didt;
 global TN_chosen_stimulator_coil_setup;
-
-if (exist('hObject','var'))
 val = round(str2double(get(hObject,'String')));
 
 if (val>0 && val<=100)
@@ -1544,7 +1469,7 @@ end
 
  set(handles.edit15,'String',num2str(didt));
  set(handles.edit16,'String',num2str(MSO)); 
-end
+
 
 
 
@@ -1617,9 +1542,7 @@ function popupmenu8_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from popupmenu8
 global TN_Efield_metric;
 
-if (exist('hObject','var'))
-  TN_Efield_metric=get(hObject,'Value');
-end
+TN_Efield_metric=get(hObject,'Value');
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu8_CreateFcn(hObject, eventdata, handles)
@@ -1643,10 +1566,7 @@ function edit19_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit19 as text
 %        str2double(get(hObject,'String')) returns contents of edit19 as a double
 global TN_Desired_ROI_Efield_Value;
-
-if (exist('hObject','var'))
- TN_Desired_ROI_Efield_Value = str2double(get(hObject,'String'));
-end
+TN_Desired_ROI_Efield_Value = str2double(get(hObject,'String'));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1675,7 +1595,6 @@ global TN_selected_coil;
 global popup_menus9;
 global popup_menus10;
 
-if (exist(hObject,'var'))
 factor = get(hObject,'Value');
 TN_selected_stimulator=popup_menus9(factor);
 count = 1;
@@ -1689,7 +1608,6 @@ end
 
 factor=(length(popup_menus10)*(factor-1))+count;
 populate_tms_intensity(factor);
-end
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu9_CreateFcn(hObject, eventdata, handles)
@@ -1717,7 +1635,6 @@ global TN_selected_coil;
 global popup_menus9;
 global popup_menus10;
 
-if (exist('hObject','var'))
 factor = get(hObject,'Value');
 TN_selected_coil = popup_menus10(factor);
 count = 1;
@@ -1732,7 +1649,6 @@ end
 factor=(length(popup_menus10)*(count-1))+factor;
 
 populate_tms_intensity(factor);
-end
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu10_CreateFcn(hObject, eventdata, handles)
@@ -1757,9 +1673,8 @@ function popupmenu11_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from popupmenu11
 global TN_EfieldScaling;
 
-if (exist('hObject','var'))
 TN_EfieldScaling=get(hObject,'Value');
-end
+
  
 % --- Executes during object creation, after setting all properties.
 function popupmenu11_CreateFcn(hObject, eventdata, handles)
@@ -1779,9 +1694,6 @@ function uibuttongroup4_DeleteFcn(hObject, eventdata, handles)
 % hObject    handle to uibuttongroup4 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global tms_opt;
-global TN_roi_center;
-global root_folder;
-tmp=tms_opt;
-tmp.target=TN_roi_center;
-save([root_folder 'TAP.mat'],'-V6','tmp');
+global abc;
+abc=22;
+disp('aus');

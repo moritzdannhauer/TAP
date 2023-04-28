@@ -9,12 +9,12 @@ smooth_normals_scalp_maxdisplacement=1.0;
 
 brain=[]; brain_tet_mesh=[]; brain_surf_tetcenter=[]; scalp=[]; head_model_mesh=[]; brain_vert_neigh=[];
 msh_files=dir([subjects_folder sep subj sep subj '*.msh']); %ROAST has differ different filename convention
-[~,idx]=sort([msh_files.datenum]); %use the oldest msh file assuming that is the original mesh 
+[~,idx]=sort([msh_files.datenum]);
 msh_files=msh_files(idx);
-if(exist([subjects_folder sep subj sep msh_files(1).name ],'file')~=0)
-   msh=mesh_load_gmsh4([subjects_folder sep subj sep msh_files(1).name ]);
-elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep msh_files(1).name ],'file')~=0)
-   msh=mesh_load_gmsh4([subjects_folder sep subj sep 'm2m_' subj sep msh_files(1).name ]); 
+if(exist([subjects_folder sep subj sep subj '*.msh'],'file')~=0)
+   msh=mesh_load_gmsh4([subjects_folder sep subj sep subj '.msh']);
+elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep subj '.msh'],'file')~=0)
+   msh=mesh_load_gmsh4([subjects_folder sep subj sep 'm2m_' subj sep subj '.msh']); 
 else
   disp(['[TAP] Error: mesh for subject ' subj ' not found neither in directory ' subjects_folder sep subj sep subj '.msh' ' nor ' subjects_folder sep subj sep 'm2m_' subj sep subj '.msh']);  
   disp(['[TAP] Abort. ']);

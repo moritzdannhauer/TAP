@@ -14,11 +14,11 @@ function [R,t] = rigid_transform_3D(A, B)
 
     R = V*U';
 
-    if det(R) < 0
-        %disp('Reflection detected');
-        V(:,3) = V(:,3) -1;
-        R = V*U';
-    end
+%     if det(R) < 0
+%         %disp('Reflection detected');
+%         V(:,3) = V(:,3) -1;
+%         R = V*U';
+%     end
 
     t = -R*centroid_A' + centroid_B';
 end

@@ -10,8 +10,8 @@ roi.field=zeros(1,length(tri));
 
 TargetingNavigator('Brain',brain,'Scalp',scalp,'ROI_size',tms_opt.target_size,'ROI',roi,'ROI_center',...
 tms_opt.target,'ROI_normal',-tms_opt.target_direction,'Scalp_normal',scalp_normal);
-
-disp('');
+global abc;
+disp(num2str(abc));
 
 
 

@@ -9,7 +9,7 @@ function make_brainsight_files(subjects_folder, subject, target, A, outputfolder
     fprintf(f,'# Coordinate system: Brainsight\n');
   end
   if (coord_sys==2)
-    fprintf(f,'# Coordinate system: NIfTI:Aligned\n');  
+    fprintf(f,'# Coordinate system: NIfTI:Scanner\n');  
   end
   fprintf(f,'# Created by: Brainsight 2.4.6\n');
   fprintf(f,'# Units: millimetres, degrees, milliseconds, and microvolts\n');

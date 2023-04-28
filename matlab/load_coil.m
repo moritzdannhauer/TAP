@@ -1,9 +1,11 @@
-function coil = load_coil(path)
+function [coil, didt] = load_coil(path)
 maxi=1e6; %a coil discretized with 1e6 dipoles or file lines seems an upper bound
 end_count=0;
 count=1;
 f=fopen(path,'r');
 nodes=[];
+didt=nan;
+disp(['[TAP] Read in ' path ' file. ']);
 while ~feof(f)
   end_count=end_count+1;  
   line=fgetl(f);
@@ -25,6 +27,13 @@ while ~feof(f)
           end
       end
     end
+  else
+   if count==1
+    tmp=char(extractBetween(line,'dIdtmax=',';')); 
+    if (~isempty(tmp))
+      didt=str2num(tmp);
+    end
+   end
   end
   if (end_count>=maxi)
      disp('Internal error: Coil was not properly read in. Coil transformation matrix generation questionable!'); 

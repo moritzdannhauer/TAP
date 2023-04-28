@@ -54,7 +54,7 @@ for i=1:iterations
   displacement_normals(noderestrictions_indexe,:)=0; 
   v=v+displacement*weight;
   normals=normals+displacement_normals*weight;
-  disp(['step ' num2str(i) ' finished!']);
+  disp(['Triangle surface smoothing step ' num2str(i) ' finished!']);
 end
 newVertex=v;
 newNormals=normals;

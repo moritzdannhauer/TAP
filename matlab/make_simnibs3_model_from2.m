@@ -1,7 +1,7 @@
 function make_simnibs3_model_from2(subj,ANISOTROPIC)
 
 load([subj '/' subj '_001_prepared_tensor.mat']);
-tensors=tet_mesh_ef.field';
+%tensors=tet_mesh_ef.field';
 load msh_template;
 
 msh.nodes=double(tet_mesh.node');
@@ -9,7 +9,9 @@ msh.tetrahedra=int32(tet_mesh.cell');
 msh.tetrahedron_regions=int32(tet_mesh.field');
 msh.triangles=int32(tri_mesh.face');
 msh.triangle_regions=int32(tri_mesh.field');
-msh.element_data{1}.tridata=double(tri_mesh_ef.field'); %this will not be used in simnibs3
+msh.element_data=[];
+
+%{1}.tridata=double(tri_mesh_ef.field'); %this will not be used in simnibs3
 
 %add isotropic conductivities
 f=tet_mesh.field;
