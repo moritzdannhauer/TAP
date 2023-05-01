@@ -1,9 +1,5 @@
 clear all;
 
-addpath('/Users/dannhauerm2/Applications/SimNIBS-3.2/matlab');
-addpath('/Users/dannhauerm2/Documents/MATLAB/');
-
-tms_opt = opt_struct('TMSoptimize');
 global root_folder;
 
 if (ispc)
@@ -28,23 +24,39 @@ Neuronaviagtion_system='Brainsight'; %'Localite' 'ANT Visor2'
 DTI=0;
 StartTargetingNavigator = 0;
 fsl_path='/usr/local/fsl';
-simnibs_folder='/Users/dannhauerm2/Applications/SimNIBS-3.2/';
-root_folder=['/Users/dannhauerm2/Desktop/Moritz_Dannhauer/2023/TAP' sep];
+simnibs_folder='/Users/m/Applications/SimNIBS-3.2/';
+root_folder=[pwd sep];
 freesurfer_matlab_folder='/Applications/freesurfer/matlab/';
 coil_models_are_here='/simnibs_env/lib/python3.7/site-packages/simnibs/ccd-files/';
-subj='T021';
+subj='ernie';
 subjects_folder='subjects';
-target_name='DLPFC';
-mask='DLPFC.nii.gz';
-outputfolder='DLPFC';
-scirunfolder='DLPFC_scirun';
-Original_MRI='T1.nii.gz';
+target_name='M1';
+mask='M1_mask_TMS_target.nii.gz';
+outputfolder='M1';
+scirunfolder='M1_scirun';
+Original_MRI='org/ernie_T1.nii.gz';
 SimNIBS_MRI=[subj '_T1fs_conform.nii.gz'];
 prefix_for_voxelized_nii_files='res';
 dti_file = ['d2c_' subj '/dti_results_T1space/DTI_conf_tensor.nii.gz'];
+%change separators and spaces
+fsl_path=strrep(fsl_path,not_sep,sep);
+fsl_path=strrep(fsl_path,space,rep_space);
+simnibs_folder=strrep(simnibs_folder,not_sep,sep);
+simnibs_folder=strrep(simnibs_folder,space,rep_space);
+root_folder=strrep(root_folder,not_sep,sep);
+root_folder=strrep(root_folder,space,rep_space);
+coil_models_are_here=strrep(coil_models_are_here,not_sep,sep);
+coil_models_are_here=strrep(coil_models_are_here,space,rep_space);
+Original_MRI=strrep(Original_MRI,not_sep,sep);
+Original_MRI=strrep(Original_MRI,space,rep_space);
+addpath(char([simnibs_folder sep 'matlab']));
+addpath(char([root_folder sep 'matlab']));
+addpath(char(freesurfer_matlab_folder));
+addpath(char(fsl_path));
+tms_opt = opt_struct('TMSoptimize');
 
 Optimize_ROI_Efield_Magnitude = 0; %0 means TMS coil placement is optimized for a particular ROI-E-field direction (i.e., perpendicular to sulcal wall)
-hairthicknesses=4;%1:8;%0.5:0.5:3.0;%:0.5:7.5; %in mm
+hairthicknesses=0.5;%1:8;%0.5:0.5:3.0;%:0.5:7.5; %in mm
 TMS_induced_Efield_flows_into_sulcalwall=1; %1=into wall, most effcicent for neuronal recruitment
 scalp_search_radius=1; %25mm radius around scalp-prpjected point
 scalp_coil_center_search_grid=1; %1mm Manhattan distance
@@ -79,23 +91,6 @@ if (~(strcmp(coil_name(end-6:end),'.nii.gz') || strcmp(coil_name(end-3:end),'.ni
      disp('[TAP] You need to specify either a coil file extension as *.nii.gz or *.ccd in coil_name. Aborted.');  
      return ;
 end
-
-%change separators and spaces
-fsl_path=strrep(fsl_path,not_sep,sep);
-fsl_path=strrep(fsl_path,space,rep_space);
-simnibs_folder=strrep(simnibs_folder,not_sep,sep);
-simnibs_folder=strrep(simnibs_folder,space,rep_space);
-root_folder=strrep(root_folder,not_sep,sep);
-root_folder=strrep(root_folder,space,rep_space);
-coil_models_are_here=strrep(coil_models_are_here,not_sep,sep);
-coil_models_are_here=strrep(coil_models_are_here,space,rep_space);
-Original_MRI=strrep(Original_MRI,not_sep,sep);
-Original_MRI=strrep(Original_MRI,space,rep_space);
-
-addpath(char([simnibs_folder sep 'matlab']));
-addpath(char([root_folder sep 'matlab']));
-addpath(char(freesurfer_matlab_folder));
-addpath(char(fsl_path));
 
 max_didt=1;
 tms_opt.method = 'ADM';
@@ -171,9 +166,10 @@ end
 r = get_mesh_elm_centers(brain_tet_mesh);
 [mindis index dis] = min_distance(r, coord);
 if (mindis<ROI_size)
-    disp(['[TAP] Automatic estimation of ROI size determined to be: ' num2str(ROI_size) ' mm']);
+    disp(['[TAP] INFO only - Automatic estimation of ROI radius size determined to be: ' num2str(ROI_size) ' mm, however, the user-specified value ' num2str(tms_opt.target_size) ' is used. ']);
+    disp(['[TAP] INFO only - Automatic estimation of ROI radius size: it is better to use a larger ROI because for too small values no GM tetrahedron may be found. ']);
 else
-    disp(['[TAP] Automatic estimation of ROI size FAILED !!!']);
+    disp(['[TAP] INFO only - Automatic estimation of ROI radius is ' num2str(ROI_size) ' mm, smaller than distance to next GM voxel ' num2str(mindis) ' mm so better use ' num2str(tms_opt.target_size) ' mm you specified instead !?']);
     if (Suppress_Any_Konsole_Input_or_Graphical_Output==0)
      ROI_size=input('[TAP] Please enter ROI size (equals radius of a spherical ROI) [mm]: ', 's');
     else
@@ -392,8 +388,20 @@ for i=hairthicknesses
  elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep 'gm.nii.gz']))
    GM=load_untouch_nii([ subjects_folder sep subj sep 'm2m_' subj sep 'gm.nii.gz' ]);
    GM=GM.img;
+ elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep subj '_final_contr.nii.gz']))
+   GM=load_untouch_nii([ subjects_folder sep subj sep 'm2m_' subj sep subj '_final_contr.nii.gz' ]);
+   GM=GM.img;  
+ elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep 'final_tissues.nii.gz']))
+   GM=load_untouch_nii([subjects_folder sep subj sep 'm2m_' subj sep 'final_tissues.nii.gz']);
+   GM=GM.img; 
+   GM(find(GM>2))=0;
+   GM(find(GM>0 & GM<=2))=1;
+ elseif (exist([subjects_folder sep subj sep 'm2m_' subj sep 'surfaces' sep 'cereb_mask.nii.gz']))
+   GM=load_untouch_nii( [subjects_folder sep subj sep 'm2m_' subj sep 'surfaces' sep 'cereb_mask.nii.gz'] );
+   GM=GM.img;   
+   GM(find(GM>0))=1;
  else
-   disp(['[TAP] Could not find gray matter segmentation gm.nii.gz or gm_fromMesh.nii.gz. The E-field may be only evaluated in the gray matter and thats done by masking it out in the gray matter. ']);
+   disp(['[TAP] Error: Could not find gray matter segmentation gm.nii.gz or gm_fromMesh.nii.gz. The E-field may be only evaluated in the gray matter and thats done by masking it out in the gray matter. ']);
  end
  
  if (which_pipeline==2) %for mri2mesh TAP can make handknob mask for TMS intensity scaling (Stokes)
@@ -432,18 +440,31 @@ for i=hairthicknesses
  end
 
  if ( (~exist([subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep 'res_E.nii.gz'],'file') && Optimize_ROI_Efield_Magnitude==0) || (~exist([subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep 'res_normE.nii.gz'],'file') && Optimize_ROI_Efield_Magnitude==1))
-  system([simnibs_folder sep 'bin' sep 'msh2nii ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep subj '_TMS_optimize_' coil_name(1:end-4) '.msh '  subjects_folder sep subj sep 'm2m_' subj ' ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep prefix_for_voxelized_nii_files]);
+  if (which_pipeline==3)
+   res=system([simnibs_folder sep 'bin' sep 'msh2nii ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep subj '_TMS_optimize_' coil_name(1:end-4) '.msh '  subjects_folder sep subj sep Original_MRI ' ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep prefix_for_voxelized_nii_files]);
+   if (res~=0 && exist(([subjects_folder sep subj sep 'm2m_' subj sep 'T1.nii.gz']),'file'))
+     res=system([simnibs_folder sep 'bin' sep 'msh2nii ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep subj '_TMS_optimize_' coil_name(1:end-4) '.msh '  subjects_folder sep subj sep 'm2m_' subj sep 'T1.nii.gz' ' ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep prefix_for_voxelized_nii_files]);
+   end
+  else
+   res=system([simnibs_folder sep 'bin' sep 'msh2nii ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep subj '_TMS_optimize_' coil_name(1:end-4) '.msh '  subjects_folder sep subj sep 'm2m_' subj ' ' subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep prefix_for_voxelized_nii_files]);
+  end
  end
+ 
+ if (res==0)
  if (~Use_original_mask_for_Efield_eval)
     Target_nii=load_untouch_nii([subjects_folder sep subj sep target_name  '_HT' sprintf('%.1f',i) sep prefix_for_voxelized_nii_files '_Target.nii.gz']);
  else
      Target_nii=load_untouch_nii(ROI_mask_vol_file);
  end
- if (all(size(GM)==size(Target_nii.img)==1))
+ 
+ if (~isempty(GM))
+  if (all(size(GM)==size(Target_nii.img)==1))
    gm_ind=intersect(find(Target_nii.img>0),find(GM>0));
    Target_nii.img(:)=0;
    Target_nii.img(gm_ind)=1;
+  end
  end
+ 
  ind=find(Target_nii.img>=Voxelize_Efield_mask_interpolation_thres);
  [x y z] = ind2sub(size(Target_nii.img),find(Target_nii.img>=Voxelize_Efield_mask_interpolation_thres));
  
@@ -598,7 +619,7 @@ for i=hairthicknesses
     disp(['[TAP] To reach ' num2str(Scale_Efield_to_Value) ' V/m, the needed scaling for E20 of ROI E-field normal is %MSO = ' num2str(round(Scaling_value_for_E20/max_didt*100)) ' (didt = ' num2str(round(Scaling_value_for_E20)) ' A/' sprintf('\x3BC') 's)']);
   end
  end
-
+ end
  system(char(['rm -rf ' subjects_folder sep subj sep' target_name '_HT' sprintf('%1.1f',i)]));
  end
  disp(['[TAP] --- computations for hairthickness ' num2str(i) ' mm completed ---']);

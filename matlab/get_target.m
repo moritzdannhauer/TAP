@@ -1,4 +1,5 @@
-function [coord, ROI_size, which_pipeline, ROI_mask_vol_file, simnibsModel] = get_target(subjects_folder, subject, mask, mri, sep, brain, Original_MRI, fsl_path)
+function [coord, ROI_size, which_pipeline, ROI_mask_vol_file, simnibsModel, success] = get_target(subjects_folder, subject, mask, mri, sep, brain, Original_MRI, fsl_path)
+success=0;
 ROI_size=0;
 coord=NaN;
 epsi=1e-8;
@@ -9,7 +10,7 @@ fine_alignment_number_voxel_to_match=150;
 tri_neighborhood=30; % [mm]
 voxelspace_to_mesh_moving_range=-2:1:2;
 alignment_range=max(abs(voxelspace_to_mesh_moving_range))+1;
-charm_gm_mask='cereb_mask.nii.gz';
+charm_gm_mask={'final_tissues.nii.gz','cereb_mask.nii.gz'};
 gm_mask='gm.nii.gz';
 roast_masks='*masks.nii.gz';
 resampled_mask='ResampledMask.nii.gz';
@@ -31,7 +32,7 @@ elseif exist(([subjects_folder sep subject sep 'm2m_' subject sep 'mri2mesh_log.
    disp(['[TAP] ' subject ' processed with mri2mesh pipeline. ' ]);   
    which_pipeline=2;
 elseif  exist(([subjects_folder sep subject sep 'm2m_' subject sep 'charm_log.html']),'file')
-   disp(['[TAP] ' subject ' processed with charm pipeline. ' ]);   
+   disp(['[TAP] ' subject ' processed with CHARM pipeline. ' ]);   
    which_pipeline=3; 
 else 
 %must be ROAST then
@@ -44,7 +45,7 @@ if ~exist((ROI_mask_vol_file),'file')
   error(['[TAP] ERROR: File '  [subject sep mask] ' does not exist. ' ]);
 end
 
-[TMaskMRI, p, Mask_MRI_CS, dimMaskMRI]=load_nii_file(ROI_mask_vol_file, eps);
+[TMaskMRI, p, Mask_MRI_CS, dimMaskMRI]=load_nii_file(ROI_mask_vol_file, eps, intmax);
 
 if ~exist(([subjects_folder sep subject sep mri]),'file')
   if exist(([subjects_folder sep subject sep 'm2m_' subject sep 'T1.nii.gz']),'file')
@@ -54,12 +55,12 @@ if ~exist(([subjects_folder sep subject sep mri]),'file')
   end
 end
 
-[TsimNIBSMRI, ~, SimNIBS_MRI_CS, dimSimnibsMRI]=load_nii_file([subjects_folder sep subject sep mri],0);
+[TsimNIBSMRI, ~, SimNIBS_MRI_CS, dimSimnibsMRI]=load_nii_file([subjects_folder sep subject sep mri],eps, intmax);
 
 if (~strcmp(Mask_MRI_CS,SimNIBS_MRI_CS) || any(dimSimnibsMRI~=dimMaskMRI))
    disp(['[TAP] Ok, the mask and SimNIBS-generated MRI you provided are in different spaces. TAP will assume the mask was registered to the original MRI and try to register it to the SimNIBS-generated MRI.']); 
     if (exist(([subjects_folder sep subject sep Original_MRI]),'file'))
-     [TOrgMRI, ~, Org_MRI_CS, dimOrgMRI]=load_nii_file([subjects_folder sep subject sep Original_MRI],1-eps);
+     [TOrgMRI, ~, Org_MRI_CS, dimOrgMRI]=load_nii_file([subjects_folder sep subject sep Original_MRI],1-eps, intmax);
 %      if (~strcmp(Org_MRI_CS,Mask_MRI_CS) || any(dimOrgMRI~=dimMaskMRI))
 %         disp(['[TAP] Also the original MRI and the mask are in different space, you need to register the mask to the original MRI to run TAP, like:']);
 %         disp(['[TAP] ' fsl_path sep 'bin' sep 'flirt -in ' ROI_mask_vol_file ' -ref ' subjects_folder sep subject sep Original_MRI ' -out ' resampled_mask ' -applyxfm']);        
@@ -104,7 +105,7 @@ if (~strcmp(Mask_MRI_CS,SimNIBS_MRI_CS) || any(dimSimnibsMRI~=dimMaskMRI))
        if (exist([subjects_folder sep subject sep 'trans_' mask],'file'))
         str=[subjects_folder sep subject sep 'trans_' mask];
         nr_voxels=size(p,1);
-        [TMaskMRI, p, Mask_MRI_CS, ~, Voxels]=load_nii_file(str,eps);
+        [TMaskMRI, p, Mask_MRI_CS, ~, Voxels]=load_nii_file(str,eps,intmax);
         tmp_ind = sub2ind(size(Voxels),p(:,1),p(:,2),p(:,3));
         Voxels=Voxels(tmp_ind);
         [~,tmp_ind] = sort(Voxels,'descend');
@@ -139,10 +140,18 @@ end
 %fine alignment MRI and mesh
 tmp1=exist([subjects_folder sep subject sep 'm2m_' subject sep gm_mask],'file');
 tmp2=0;
-if (which_pipeline==3)
-  tmp2=exist([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep charm_gm_mask],'file');
-end
-if (which_pipeline==4)
+if (which_pipeline==1)
+  gm_mask=[subject '_final_contr.nii.gz'];
+  tmp1=exist([subjects_folder sep subject sep 'm2m_' subject sep gm_mask],'file'); 
+elseif (which_pipeline==3)
+  tmp2=exist([subjects_folder sep subject sep 'm2m_' subject sep charm_gm_mask{1}],'file');
+  if tmp2==0
+    tmp2=exist([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep charm_gm_mask{2}],'file');  
+    tmp2=2;
+  else
+     tmp2=1;
+  end
+elseif (which_pipeline==4)
   roast_mask_file=dir([subjects_folder sep subject sep roast_masks]);
   [~,idx]=sort([roast_mask_file.datenum]); %use the oldest msh file assuming that is the original mesh 
   roast_mask_file=roast_mask_file(idx);
@@ -150,17 +159,30 @@ if (which_pipeline==4)
 end
 
 if (tmp1~=0 || tmp2~=0) 
-    if (tmp1~=0)
+    if (which_pipeline==1)
       disp(['[TAP] Found ' gm_mask ' and now refine alignment (the following steps may take a few minutes, have patience) ']);
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep gm_mask], 0);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep gm_mask], eps, 2);  
+      GM_fromMesh(find(GM_fromMesh>2))=0;
+      GM_fromMesh(find(GM_fromMesh>0 & GM_fromMesh<=2))=1;
+    elseif (tmp1~=0)
+      disp(['[TAP] Found ' gm_mask ' and now refine alignment (the following steps may take a few minutes, have patience) ']);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep gm_mask], eps, intmax);
     elseif (tmp2~=0 && which_pipeline==3)
-      gm_mask=charm_gm_mask;
-      disp(['[TAP] Found ' charm_gm_mask ' and now refine alignment (the following steps may take quite a few minutes, please have patience!) ']); 
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep charm_gm_mask], 0);
+      gm_mask=charm_gm_mask{tmp2};
+      disp(['[TAP] Found ' charm_gm_mask{tmp2} ' and now refine alignment (the following steps may take quite a few minutes, please have patience!) ']); 
+      if (tmp2==1)
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep charm_gm_mask{tmp2}], eps, intmax);
+      GM_fromMesh(find(GM_fromMesh>2))=0;
+      GM_fromMesh(find(GM_fromMesh>0 & GM_fromMesh<=2))=1;
+      elseif (tmp2==2)
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep  charm_gm_mask{tmp2}], eps, intmax);
+      GM_fromMesh(find(GM_fromMesh>1))=0;  
+      end
+ 
     elseif (tmp2~=0 && which_pipeline==4)
       gm_mask=roast_mask_file(1).name;
       disp(['[TAP] Found ' gm_mask ' and now refine alignment (the following steps may take quite a few minutes, please have patience!) ']); 
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep gm_mask], eps);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep gm_mask], eps, intmax);
       GM_fromMesh(find(GM_fromMesh~=2))=0;
       GM_fromMesh(find(GM_fromMesh==2))=1;
     end
@@ -207,8 +229,12 @@ if (tmp1~=0 || tmp2~=0)
     -1, +1, -1;
     -1, -1, -1;
     -1, +0, -1];
-    
+
+    m_x=size(GM_fromMesh,1);
+    m_y=size(GM_fromMesh,2);
+    m_z=size(GM_fromMesh,3);
     for i=1:length(gm_x)
+      if (gm_x(i)+1<=m_x && gm_x(i)-1>0 &&  gm_y(i)+1<=m_y && gm_y(i)-1>0 && gm_z(i)+1<=m_z && gm_z(i)-1>0 )
       val=all([
           GM_fromMesh(gm_x(i)+neigh( 1,1), gm_y(i)+neigh( 1,2), gm_z(i)+neigh( 1,3)) 
           GM_fromMesh(gm_x(i)+neigh( 2,1), gm_y(i)+neigh( 2,2), gm_z(i)+neigh( 2,3))
@@ -239,6 +265,7 @@ if (tmp1~=0 || tmp2~=0)
           GM_fromMesh(gm_x(i)+neigh(27,1), gm_y(i)+neigh(27,2), gm_z(i)+neigh(27,3)) 
           ]);
           gm_surf_voxel(i)=not(val);
+      end
     end
 
     gm_surf_voxel=find(gm_surf_voxel==1);
@@ -433,6 +460,14 @@ simnibsModel=simnibsModel(:,1:3);
 simnibsModel(:,1)=simnibsModel(:,1)+offset_x;
 simnibsModel(:,2)=simnibsModel(:,2)+offset_y;
 simnibsModel(:,3)=simnibsModel(:,3)+offset_z;
+
+[mindis index dis] = min_distance( GM_fromMesh, simnibsModel);
+
+if(min(mindis)>2*max([max(abs(T(1:3,1))) max(abs(T(1:3,2))) max(abs(T(1:3,3)))]) )
+  disp(['[TAP] Warning: This is not good, the minmal distance (' num2str(min(mindis)) ' mm) between any ROI voxel and the next gray matter voxel is more than 2 voxel side lengths away.']);   
+  disp('[TAP] Lets see if we can start the Targeting navigator, if not the script will continue to run.');
+  success=0;
+end
 
 if ( (size(simnibsModel,1)==1 && size(simnibsModel,2)==3) || (size(simnibsModel,1)==3 && size(simnibsModel,2)==1))
  coord = simnibsModel;

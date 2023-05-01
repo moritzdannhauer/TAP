@@ -5,4 +5,4 @@
 # Encoding: UTF-8
 # Notes: Each column is delimited by a tab. Each value within a column is delimited by a semicolon.
 # Sample	Name	Session	Name	Index	Assoc. Target	Loc. X	Loc. Y	Loc. Z	m0n0	m0n1	m0n2	m1n0	m1n1	m1n2	m2n0	m2n1	m2n2	Dist. to Target	Target Error	Angular Error	Twist Error	Date	Time	Creation Cause	Crosshairs Driver	Offset	Comment
-Subject	1	Session	2	1	ernieM1HT0.5mm 	-50.925	-26.404	101	0.848	1.189e-16	0.53	0.02101	0.9992	-0.03362	-0.5296	0.03965	0.8473	0.0000	0.0000	0.0000	0.0000	2023-05-01	00:56:07.097	Button	Mouse	0.0000	(null)
+Subject	1	Session	2	1	ernieM1HT0.5mm_REVERSECOILCURRENT 	-49.726	6.0362	82.528	-0.8279	0	-0.5608	0.05835	0.9946	-0.08614	-0.5578	0.104	0.8234	0.0000	0.0000	0.0000	0.0000	2023-05-01	03:14:33.097	Button	Mouse	0.0000	(null)

@@ -9,6 +9,18 @@ smooth_normals_scalp_maxdisplacement=1.0;
 
 brain=[]; brain_tet_mesh=[]; brain_surf_tetcenter=[]; scalp=[]; head_model_mesh=[]; brain_vert_neigh=[];
 msh_files=dir([subjects_folder sep subj sep subj '*.msh']); %ROAST has differ different filename convention
+disp(['[TAP] Trying to look for mesh file (*.msh) in directory: ' subjects_folder sep subj sep ]);
+if (min(size(msh_files))==0)
+   disp(['[TAP] Trying to look for mesh file (*.msh) in directory: ' subjects_folder sep subj sep 'm2m_' subj sep]);
+   msh_files=dir([subjects_folder sep subj sep 'm2m_' subj sep '*.msh']); %check also in m2m_* folder
+else
+   disp(['[TAP] Mesh file ' subjects_folder sep subj sep subj '.msh was found.']); 
+end
+if (min(size(msh_files))==0)
+ disp('[TAP] Oh no, TAP could not find the mesh *.msh file. Abort. ');
+else
+  disp(['[TAP] Mesh file ' subjects_folder sep subj sep 'm2m_' subj sep subj '.msh was found.']); 
+end
 [~,idx]=sort([msh_files.datenum]); %use the oldest msh file assuming that is the original mesh 
 msh_files=msh_files(idx);
 if(exist([subjects_folder sep subj sep msh_files(1).name ],'file')~=0)

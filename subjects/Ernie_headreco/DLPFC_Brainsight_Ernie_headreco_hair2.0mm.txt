@@ -1,8 +1,8 @@
 # Version: 12
-# Coordinate system: NIfTI:Aligned
+# Coordinate system: NIfTI:Scanner
 # Created by: Brainsight 2.4.6
 # Units: millimetres, degrees, milliseconds, and microvolts
 # Encoding: UTF-8
 # Notes: Each column is delimited by a tab. Each value within a column is delimited by a semicolon.
 # Sample	Name	Session	Name	Index	Assoc. Target	Loc. X	Loc. Y	Loc. Z	m0n0	m0n1	m0n2	m1n0	m1n1	m1n2	m2n0	m2n1	m2n2	Dist. to Target	Target Error	Angular Error	Twist Error	Date	Time	Creation Cause	Crosshairs Driver	Offset	Comment
-Subject	1	Session	2	1	ernie_headreco_no-conformDLPFCHT2mm 	-56.0567	65.4776	57.0899	0.1115	-0.6672	0.7365	0.5292	0.6672	0.5242	-0.8411	0.3313	0.4275	0.0000	0.0000	0.0000	0.0000	2022-04-07	07:20:25.097	Button	Mouse	0.0000	(null)
+Subject	1	Session	2	1	ernieDLPFCHT2mm_REVERSECOILCURRENT 	-59.896	35.739	74.33	-0.4263	-2.776e-17	-0.9046	0.2742	0.9529	-0.1292	-0.862	0.3031	0.4063	0.0000	0.0000	0.0000	0.0000	2023-04-28	18:43:43.097	Button	Mouse	0.0000	(null)
