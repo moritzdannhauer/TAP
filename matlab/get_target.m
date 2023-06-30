@@ -45,7 +45,7 @@ if ~exist((ROI_mask_vol_file),'file')
   error(['[TAP] ERROR: File '  [subject sep mask] ' does not exist. ' ]);
 end
 
-[TMaskMRI, p, Mask_MRI_CS, dimMaskMRI]=load_nii_file(ROI_mask_vol_file, eps, intmax);
+[TMaskMRI, p, Mask_MRI_CS, dimMaskMRI]=load_nii_file(ROI_mask_vol_file, eps);%, intmax);
 
 if ~exist(([subjects_folder sep subject sep mri]),'file')
   if exist(([subjects_folder sep subject sep 'm2m_' subject sep 'T1.nii.gz']),'file')
@@ -55,12 +55,12 @@ if ~exist(([subjects_folder sep subject sep mri]),'file')
   end
 end
 
-[TsimNIBSMRI, ~, SimNIBS_MRI_CS, dimSimnibsMRI]=load_nii_file([subjects_folder sep subject sep mri],eps, intmax);
+[TsimNIBSMRI, ~, SimNIBS_MRI_CS, dimSimnibsMRI]=load_nii_file([subjects_folder sep subject sep mri],eps);%, intmax);
 
 if (~strcmp(Mask_MRI_CS,SimNIBS_MRI_CS) || any(dimSimnibsMRI~=dimMaskMRI))
    disp(['[TAP] Ok, the mask and SimNIBS-generated MRI you provided are in different spaces. TAP will assume the mask was registered to the original MRI and try to register it to the SimNIBS-generated MRI.']); 
     if (exist(([subjects_folder sep subject sep Original_MRI]),'file'))
-     [TOrgMRI, ~, Org_MRI_CS, dimOrgMRI]=load_nii_file([subjects_folder sep subject sep Original_MRI],1-eps, intmax);
+     [TOrgMRI, ~, Org_MRI_CS, dimOrgMRI]=load_nii_file([subjects_folder sep subject sep Original_MRI],1-eps);%, intmax);
 %      if (~strcmp(Org_MRI_CS,Mask_MRI_CS) || any(dimOrgMRI~=dimMaskMRI))
 %         disp(['[TAP] Also the original MRI and the mask are in different space, you need to register the mask to the original MRI to run TAP, like:']);
 %         disp(['[TAP] ' fsl_path sep 'bin' sep 'flirt -in ' ROI_mask_vol_file ' -ref ' subjects_folder sep subject sep Original_MRI ' -out ' resampled_mask ' -applyxfm']);        
@@ -105,7 +105,7 @@ if (~strcmp(Mask_MRI_CS,SimNIBS_MRI_CS) || any(dimSimnibsMRI~=dimMaskMRI))
        if (exist([subjects_folder sep subject sep 'trans_' mask],'file'))
         str=[subjects_folder sep subject sep 'trans_' mask];
         nr_voxels=size(p,1);
-        [TMaskMRI, p, Mask_MRI_CS, ~, Voxels]=load_nii_file(str,eps,intmax);
+        [TMaskMRI, p, Mask_MRI_CS, ~, Voxels]=load_nii_file(str,eps);%,intmax);
         tmp_ind = sub2ind(size(Voxels),p(:,1),p(:,2),p(:,3));
         Voxels=Voxels(tmp_ind);
         [~,tmp_ind] = sort(Voxels,'descend');
@@ -166,35 +166,39 @@ if (tmp1~=0 || tmp2~=0)
       GM_fromMesh(find(GM_fromMesh>0 & GM_fromMesh<=2))=1;
     elseif (tmp1~=0)
       disp(['[TAP] Found ' gm_mask ' and now refine alignment (the following steps may take a few minutes, have patience) ']);
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep gm_mask], eps, intmax);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep gm_mask], eps);%, intmax);
     elseif (tmp2~=0 && which_pipeline==3)
       gm_mask=charm_gm_mask{tmp2};
       disp(['[TAP] Found ' charm_gm_mask{tmp2} ' and now refine alignment (the following steps may take quite a few minutes, please have patience!) ']); 
       if (tmp2==1)
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep charm_gm_mask{tmp2}], eps, intmax);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep charm_gm_mask{tmp2}], eps);%, intmax);
       GM_fromMesh(find(GM_fromMesh>2))=0;
       GM_fromMesh(find(GM_fromMesh>0 & GM_fromMesh<=2))=1;
       elseif (tmp2==2)
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep  charm_gm_mask{tmp2}], eps, intmax);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep 'm2m_' subject sep 'surfaces' sep  charm_gm_mask{tmp2}], eps);%, intmax);
       GM_fromMesh(find(GM_fromMesh>1))=0;  
       end
  
     elseif (tmp2~=0 && which_pipeline==4)
       gm_mask=roast_mask_file(1).name;
       disp(['[TAP] Found ' gm_mask ' and now refine alignment (the following steps may take quite a few minutes, please have patience!) ']); 
-      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep gm_mask], eps, intmax);
+      [~, ~, ~, ~, GM_fromMesh] = load_nii_file([subjects_folder sep subject sep gm_mask], eps);%, intmax);
       GM_fromMesh(find(GM_fromMesh~=2))=0;
       GM_fromMesh(find(GM_fromMesh==2))=1;
     end
     
-    CC = bwconncomp(GM_fromMesh,26);
-    maxi=0;
-    for i=1:CC.NumObjects
+    if (exist('bwconncomp'))
+     CC = bwconncomp(GM_fromMesh,26);
+     maxi=0;
+     for i=1:CC.NumObjects
         if (length(cell2mat(CC.PixelIdxList(i)))>maxi)
             brain_voxels=cell2mat(CC.PixelIdxList(i));
             maxi=length(cell2mat(CC.PixelIdxList(i)));
             ind=i;
         end
+     end
+    else
+      brain_voxels=GM_fromMesh;  
     end
     
     [gm_x gm_y gm_z] = ind2sub(size(GM_fromMesh),brain_voxels); 
