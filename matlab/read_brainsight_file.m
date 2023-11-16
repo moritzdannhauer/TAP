@@ -57,6 +57,7 @@ while ~feof(f) % feof: test for end of file; while not end of file
             T(1,2)=m1n0; T(2,2)=m1n1; T(3,2)=m1n2;
             T(1,3)=m2n0; T(2,3)=m2n1; T(3,3)=m2n2; %rotation of the coil
             T(1,4)=X;    T(2,4)=Y;    T(3,4)=Z;  T(4,4)=1;%center of the coil
+            T(:, [1 3]) = -T(:, [1 3]); % Brainsight coordinate convention has X and Z flipped compared to the SimNIBS convention
             BS_Trans_mat{count}=T;
             count=count+1;
             if (count>max_count)
